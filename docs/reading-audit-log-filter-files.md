@@ -15,6 +15,7 @@ Initialize a read sequence by using a bookmark or an argument that specifies the
 
 ```{.bash data-prompt="mysql>"}
 mysql> SELECT audit_log_read(audit_log_read_bookmark());
+```
 
 The following example continues reading from the current position:
 
@@ -24,3 +25,54 @@ mysql> SELECT audit_log_read();
 
 Reading a file is closed when the session ends or calling `audit_log_read()` with another argument.
 
+## Using jq to process JSON audit logs
+
+The `jq` utility is a command-line JSON processor that provides an alternative way to read and analyze JSON-format audit log files. This is useful for filtering, searching, and formatting audit log data from the command line.
+
+### Installing jq
+
+=== "RHEL/CentOS"
+
+    ```bash
+    sudo yum install jq
+    ```
+
+=== "Debian/Ubuntu"
+
+    ```bash
+    sudo apt install jq
+    ```
+
+### Example usage
+
+Extract all connection events:
+
+```bash
+cat audit.log | jq '.[]|select(.class=="connection")'
+```
+
+Find all events for a specific user:
+
+```bash
+cat audit.log | jq '.[]|select(.account.user | contains("user1"))'
+```
+
+Filter events by SQL command type:
+
+```bash
+cat audit.log | jq '.[]|select(.general_data.sql_command=="select")'
+```
+
+Extract only INSERT operations on specific tables:
+
+```bash
+cat audit.log | jq '.[]|select(.class=="table_access" and .event=="insert" and (.table_access_data.table_database // "")=="mydb")'
+```
+
+Pretty-print the entire audit log:
+
+```bash
+cat audit.log | jq '.' | less
+```
+
+For more `jq` examples and syntax, see the [jq documentation](https://stedolan.github.io/jq/manual/).
